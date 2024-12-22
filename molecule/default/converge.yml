@@ -2,6 +2,9 @@
 - name: Converge
   hosts: all
   become: yes
+  tasks:
+    - name: Load variables from args.yml
+      include_vars:
+        file: "{{ playbook_dir }}/args.yml"
   roles:
     - role: postgresql
-
