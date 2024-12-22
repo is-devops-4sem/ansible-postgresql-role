@@ -234,6 +234,16 @@
         line: "primary_conninfo = 'host={{ pg_master_host }} port={{ pg_port }} user={{ pg_replication.replication_user }} password={{ pg_replication.replication_password }}'"
         create: yes
 
+    - name: Ensure no existing PostgreSQL processes conflict on replica
+      shell: |
+        ps aux | grep '[p]ostgres' | awk '{print $2}' | xargs -r kill -9
+        ps aux | grep '[p]ostgres' | wc -l
+      args:
+        executable: /bin/bash
+      register: postgres_kill
+      ignore_errors: true
+      changed_when: postgres_kill.stdout | int > 0
+
     - name: Start PostgreSQL service for replica
       shell: |
         pg_ctlcluster {{ pg_version }} main start
