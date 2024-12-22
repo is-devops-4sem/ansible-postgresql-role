@@ -1,38 +1,102 @@
-Role Name
-=========
+# Ansible Role: PostgreSQL Setup
 
-A brief description of the role goes here.
+## Description
+This Ansible role automates the installation and configuration of PostgreSQL in a master-replica environment. It handles:
 
-Requirements
-------------
+- Installation of required packages and Python dependencies.
+- Configuration of PostgreSQL repositories.
+- Initialization of PostgreSQL clusters and setting up data directories.
+- Configuring master and replica nodes for replication.
+- Creation of PostgreSQL users and databases.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Requirements
+- Supported OS: Ubuntu/Debian-based systems.
+- Python 3 and `pip3` installed on target systems.
+- PostgreSQL version specified in the `pg_version` variable.
+- Proper network setup for replication (e.g., connectivity between master and replica nodes).
 
-Role Variables
---------------
+## Role Variables
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+| Variable                          | Description                                                                 | Default/Example                       |
+|-----------------------------------|-----------------------------------------------------------------------------|---------------------------------------|
+| `pg_version`                      | PostgreSQL version to install.                                             | `14`                                  |
+| `pg_data_dir`                     | Custom data directory for PostgreSQL.                                      | `/var/lib/postgresql/{{ pg_version }}`|
+| `pg_default_data_dir`             | Default PostgreSQL data directory.                                         | `/var/lib/postgresql/{{ pg_version }}`|
+| `pg_listen_addresses`             | IP addresses PostgreSQL listens on.                                        | `'localhost'`                         |
+| `pg_port`                         | Port PostgreSQL listens on.                                                | `5432`                                |
+| `pg_replication.enabled`          | Enable replication setup.                                                  | `false`                               |
+| `pg_replication.replication_user` | Replication user name.                                                     | `replicator`                          |
+| `pg_replication.replication_password` | Replication user password.                                                | `password`                            |
+| `pg_users`                        | List of PostgreSQL users to create.                                        | See example below.                    |
+| `pg_databases`                    | List of PostgreSQL databases to create.                                    | See example below.                    |
+| `postgres_role`                   | Role of the current host (`master` or `replica`).                          | `master`                              |
+| `pg_master_host`                  | Hostname or IP of the master node (for replicas).                          | `master.example.com`                  |
+| `postgresql_repo_path`            | Path to PostgreSQL repository script.                                      | `/usr/share/postgresql-common/pgdg`   |
+| `postgresql_key_url`              | URL for downloading PostgreSQL signing key.                                | `https://www.postgresql.org/key`      |
+| `postgresql_sources_list`         | Path to PostgreSQL sources list file.                                      | `/etc/apt/sources.list.d/pgdg.list`   |
+| `postgresql_repo_url`             | PostgreSQL repository base URL.                                            | `http://apt.postgresql.org/pub/repos` |
 
-Dependencies
-------------
+### Example `pg_users` and `pg_databases`
+```yaml
+pg_users:
+  - name: app_user
+    password: app_password
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+pg_databases:
+  - name: app_db
+    owner: app_user
+```
 
-Example Playbook
-----------------
+## Dependencies
+No external dependencies are required.
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+## Usage
+Include this role in your playbook and set the required variables.
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+### Example Playbook
+```yaml
+- hosts: all
+  roles:
+    - role: postgresql_setup
+      vars:
+        pg_version: 14
+        pg_data_dir: /custom/data/dir
+        pg_replication:
+          enabled: true
+          replication_user: replicator
+          replication_password: replication_pass
+        pg_users:
+          - name: app_user
+            password: app_password
+        pg_databases:
+          - name: app_db
+            owner: app_user
+        postgres_role: master
+```
 
-License
--------
+### Running the Role
+```bash
+ansible-playbook -i inventory postgresql_setup.yml
+```
 
-BSD
+## Role Tasks
+### General Workflow
+1. Install necessary system packages.
+2. Install Python dependencies.
+3. Configure PostgreSQL repository and install PostgreSQL.
+4. Initialize PostgreSQL data directory and cluster.
+5. Configure PostgreSQL settings:
+   - Listening addresses.
+   - Port number.
+   - Data directory.
+6. Create users and databases.
+7. Configure master node:
+   - Enable replication.
+   - Set WAL level and maximum WAL senders.
+8. Configure replica node:
+   - Stop PostgreSQL service.
+   - Perform base backup from master.
+   - Set up `primary_conninfo` for replication.
 
-Author Information
-------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+
