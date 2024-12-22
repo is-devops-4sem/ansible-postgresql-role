@@ -1,0 +1,22 @@
+pg_version: "14"
+pg_listen_addresses: "'*'"
+pg_port: "5432"
+# Default data directory; will be used if pg_data_dir is not set
+pg_default_data_dir: "/var/lib/postgresql/{{ pg_version }}/main"
+pg_data_dir: ""
+pg_users:
+  - name: "user1"
+    password: "password1"
+  - name: "user2"
+    password: "password2"
+pg_databases:
+  - name: "db1"
+    owner: "user1"
+  - name: "db2"
+    owner: "user2"
+pg_replication:
+  enabled: true
+  replication_user: "replicator"
+  replication_password: "replica_pass"
+pg_master_host: "postgres-master"
+

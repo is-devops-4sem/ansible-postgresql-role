@@ -1,0 +1,29 @@
+---
+postgresql_sources_list: "/etc/apt/sources.list.d/pgdg.list"
+postgresql_repo_url: "https://apt.postgresql.org/pub/repos/apt"
+postgresql_repo_path: "/usr/share/postgresql-common/pgdg/apt.postgresql.org.sh"
+postgresql_key_url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+postgresql_key: "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc"
+
+pg_version: "14"
+pg_listen_addresses: "'*'"
+pg_port: "5432"
+
+# Default data directory; will be used if pg_data_dir is not set
+pg_default_data_dir: "/var/lib/postgresql/{{ pg_version }}/main"
+
+# Custom data directory (optional)
+pg_data_dir: ""  # Empty by default; if set, it will override pg_default_data_dir
+
+pg_conf_path: "/etc/postgresql/{{ pg_version }}/main/postgresql.conf"
+
+pg_users: []
+pg_databases: []
+
+pg_replication:
+  enabled: false
+  replication_user: "replicator"
+  replication_password: "replica_pass"
+
+pg_master_host: ""
+

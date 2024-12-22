@@ -1,0 +1,54 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+platforms:
+  - name: postgres-master
+    hostname: postgres-master
+    image: geerlingguy/docker-debian11-ansible:latest
+    command: "/lib/systemd/systemd"
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    published_ports:
+      - "5432:5432"
+    env:
+      postgres_role: master
+    networks:
+      - name: network
+
+  - name: postgres-replica1
+    hostname: postgres-replica1
+    image: geerlingguy/docker-debian11-ansible:latest
+    command: "/lib/systemd/systemd"
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    published_ports:
+      - "5433:5432"
+    env:
+      postgres_role: replica
+    networks:
+      - name: network
+
+provisioner:
+  name: ansible
+  inventory:
+    host_vars:
+      postgres-master:
+        postgres_role: master
+      postgres-replica1:
+        postgres_role: replica
+    group_vars:
+      all:
+        ansible_python_interpreter: /usr/bin/python3
+  playbooks:
+    converge: converge.yml
+    verify: verify.yml
+
+verifier:
+  name: ansible
+

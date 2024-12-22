@@ -1,0 +1,56 @@
+---
+- name: Verify PostgreSQL setup
+  hosts: all
+  become: yes
+  tasks:
+    - name: Load variables from args.yml
+      include_vars:
+        file: "{{ playbook_dir }}/args.yml"
+
+    - name: Set effective data directory
+      set_fact:
+        pg_effective_data_dir: "{{ pg_default_data_dir }}"
+
+    - name: Verify PostgreSQL is installed
+      shell: "psql --version"
+      register: psql_version
+      changed_when: false
+
+    - name: Check PostgreSQL version
+      debug:
+        msg: "Installed PostgreSQL version: {{ psql_version.stdout }}"
+
+    - name: Check PostgreSQL service is running
+      service:
+        name: postgresql
+        state: started
+      register: service_status
+      changed_when: false
+
+    - name: Verify service status is online
+      assert:
+        that:
+          - service_status.state == "started"
+        fail_msg: "PostgreSQL service is not running"
+
+    - name: Check PostgreSQL listens on the correct port
+      shell: "ss -tuln | grep ':{{ pg_port }} '"
+      register: port_check
+      changed_when: false
+
+    - name: Assert PostgreSQL port is listening
+      assert:
+        that:
+          - "port_check.rc == 0"
+        fail_msg: "PostgreSQL is not listening on port {{ pg_port }}"
+
+    - name: Verify data directory exists
+      stat:
+        path: "{{ pg_effective_data_dir }}"
+      register: data_dir_stat
+
+    - name: Assert data directory exists
+      assert:
+        that:
+          - "data_dir_stat.stat.exists"
+        fail_msg: "Data directory does not exist at {{ pg_effective_data_dir }}"
